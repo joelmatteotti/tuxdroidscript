@@ -1,3 +1,14 @@
 
+Revision 3:
+- Add more comments
+- Add debug printf() with define to enable or disable it
+- Fix allocation problem on KW_SPEAK command
+- Fix comments interpretation
+
+
+Revision 2:
+- Remove objects'files and binaries 
+
+
 Revision 1:
 - initial commit (not functionnal except for some tests)

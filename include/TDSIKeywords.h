@@ -38,10 +38,12 @@
 
 //Standard Keywords
 
-#define KW_EQUAL "="
-#define KW_ADD "+"
-#define KW_SUB "-"
-#define KW_DIV "/"
+//Mathematic:
+
+#define KW_MATH_EQUAL "="
+#define KW_MATH_ADD "+"
+#define KW_MATH_SUB "-"
+#define KW_MATH_DIV "/"
 
 
 #endif

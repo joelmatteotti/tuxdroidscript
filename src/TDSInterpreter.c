@@ -24,6 +24,9 @@
 // TuxDroidScript Interpreter (0.1-test)
 //
 
+//#define DEBUG uncomment me to display traces messages :)
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -60,6 +63,7 @@ int isCmd(char *str)
 	return 0;		
 }
 
+//Return 1 if str is the first param else return 0
 int isFirstParam(char *str)
 {
 	if(!strcmp(strtolower(str),KW_MOUTH) || !strcmp(strtolower(str),KW_EYES_SING) || !strcmp(strtolower(str),KW_EYES_PLUR)
@@ -72,7 +76,7 @@ int isFirstParam(char *str)
 	
 }
 
-//get direction position
+//Return 1 if the param is a pos like LEFT or RIGHT else return 0
 int isDirectionPos(char *str)
 {
 	if(!strcmp(strtolower(str),KW_LEFT) || !strcmp(strtolower(str),KW_RIGHT))
@@ -82,7 +86,8 @@ int isDirectionPos(char *str)
 }
 
 
-//get number position
+//Return 1 if the param is a numeric number else return 0
+//TODO: alphabetical number (Ex: Turn three times to your left)
 int isNumberPos(char *str)
 {
 	if(atoi(str))
@@ -92,21 +97,39 @@ int isNumberPos(char *str)
 	return 0;
 }
 
-
+//Analyse the line and do action
 void analyseLine(char *line)
 {
+	#if defined DEBUG
+		printf("Enter analyseLine() => %s\n",line);
+	#endif
+
+	if(line == NULL) //if line is NULL stop here
+	{
+		#if defined DEBUG
+			printf("The line is NULL !!");
+		#endif
+		
+		return;
+	}
 
 	line = trim(line);
 	
-	if(!strcmp(line,""))
-		return;	
+	if(!strcmp(line,"")) //don't analyse empty line
+	{
+		#if defined DEBUG
+			printf("The line is empty\n");
+		#endif
 		
-	if(line == NULL)
-		return;
+		return;	
+	}
 	
 	int wc = countCharacterOccurency(line,' '); //count the number of word
 	char **sp = explode(line,' '); //space is the separator in the line (Ex: turn left 10 time)
 	
+	#if defined DEBUG
+		printf("WordCount => %d\n",wc);
+	#endif
 	
 	//1 - Search the cmd
 	//2 - Search the first param
@@ -114,54 +137,108 @@ void analyseLine(char *line)
 	
 	char *CMD = NULL;
 
-	int cmdPos = 0;
-	
+
+	//Search the command's position in the string
+	int cmdPos = 0; 
 	while(!isCmd(sp[cmdPos]))
-	{
 		cmdPos++;
-	}
+
+	#if defined DEBUG
+		printf("Command's position => %d\n",cmdPos);
+	#endif
 
 	if(!strcmp(strtolower(sp[cmdPos]), KW_SPEAK))
 	{
+		#if defined DEBUG
+			printf("Command is KW_SPEAK (%s)\n",KW_SPEAK);
+		#endif
+		
 		//Speak only have phrase as parameter
 		CMD = (char *)malloc(sizeof(char)*strlen(line)-strlen(sp[cmdPos])+27); //27 is for the command's len
 		
-		//Use all str except KW_SPEAK (sp[0])
+	
+		#if defined DEBUG
+			printf("Reconstruction of the phrase ...\n");
+			printf("Memory Allocation..");
+		#endif	
 		
-		char phr[strlen(line)+5];
-		int i;
+	
+		#if defined DEBUG
+			printf("size of phr => %d\n",strlen(line)-strlen(KW_SPEAK)-1);
+		#endif
+		
+		//Use all str except KW_SPEAK (sp[0])
+		//char phr[strlen(line)-strlen(KW_SPEAK)-1]; //-1 is for the space betweek KW_SPEAK and the start of the phrase
+		
+		char *phr = (char *)malloc(sizeof(char)*strlen(line)-strlen(KW_SPEAK)-1);
+		
+		#if defined DEBUG
+			printf("Memory allocation OK !\n");
+		#endif
+		
+		int i=0;
 		int pos = 0;
 		
-		for(i = strlen(KW_SPEAK); i < strlen(line); i++)
-		{
-			phr[i-strlen(KW_SPEAK)] = line[i];	
-		}
+		#if defined DEBUG
+			printf("Start of for loop...\n");
+	
+			printf("KW_SPEAK => %s\n",KW_SPEAK);
+			printf("LINE => %s\n",line);
+			
+			printf("KW_SPEAK len => %d\n",strlen(KW_SPEAK));
+			printf("Line len => %d\n",strlen(line));
+		#endif
+		
+		
+	
+		
+		for(i = strlen(KW_SPEAK)+1; i < strlen(line); i++) //+1 is for the space betweek KW_SPEAK and the start of the phrase
+			phr[i-strlen(KW_SPEAK)-1] = line[i];	//-1 because of the space betweek KW_SPEAK and the start of the phrase
+		
+		#if defined DEBUG
+			printf("before trim => %s\n",phr);
+		#endif
 		
 		trim((char*)phr);
 		
+		#if defined DEBUG
+			printf("after trim => %s\n",phr);
+		#endif
+		
+		
 		sprintf(CMD,"Tux_TTS(%s,mb-fr1,50,115,1,1)",phr);
 	}
-	else
+	else if(!strcmp(strtolower(sp[cmdPos]),KW_OPEN) || !strcmp(strtolower(sp[cmdPos]),KW_CLOSE) || !strcmp(strtolower(sp[cmdPos]),KW_ROTATE))
 	{
 		//All others commands have one or more parameters
+	
+		#if defined DEBUG
+			printf("BASIC COMMANDS SEARCH\n");
+		#endif
+	
+	
+		#if defined DEBUG
+			printf("Search the first parameter's position\n");
+		#endif
 		
+		//Search the frist parameter's pos	
 		int fParamPos = 0;
-		
 		while(!isFirstParam(sp[fParamPos]))
-		{
 			fParamPos++;
-		}
-		
+
+		#if defined DEBUG
+			printf("First parameter's position => %d\n",fParamPos);
+		#endif		
 
 		if(!strcmp(strtolower(sp[cmdPos]),KW_OPEN))
 		{
+			#if defined DEBUG
+				printf("KW_OPEN !\n");
+			#endif
+			
 			//OPEN
-			
 			//sp[fParamPos] contain what tux must open ^^
-			
 			//Tux_Open(Mouth) or Tux_Open(Eyes)
-			
-			//15
 			CMD = (char *)malloc(sizeof(char)*15);
 			
 			if(!strcmp(strtolower(sp[fParamPos]),KW_MOUTH))
@@ -169,13 +246,15 @@ void analyseLine(char *line)
 				
 			if(!strcmp(strtolower(sp[fParamPos]),KW_EYES_PLUR))
 				sprintf(CMD,"Tux_Open(Eyes)");
-
 		}
 
 		if(!strcmp(strtolower(sp[cmdPos]),KW_CLOSE))
 		{
-			//CLOSE
+			#if defined DEBUG
+				printf("KW_CLOSE !\n");
+			#endif
 			
+			//CLOSE
 			CMD = (char *)malloc(sizeof(char)*16);
 			
 			if(!strcmp(strtolower(sp[fParamPos]),KW_MOUTH))
@@ -185,10 +264,12 @@ void analyseLine(char *line)
 				sprintf(CMD,"Tux_Close(Eyes)");
 		}
 		
-		
-		
 		if(!strcmp(strtolower(sp[cmdPos]),KW_ROTATE))
 		{
+			#if defined DEBUG
+				printf("KW_ROTATE !\n");
+			#endif
+			
 			//Check if the command have third parameter
 			
 			//cmd => sp[cmdPos]
@@ -199,40 +280,57 @@ void analyseLine(char *line)
 			//Turn left 1 times (WC = 3)
 			
 			
+			#if defined DEBUG
+				printf("Search the direction instruction position ...\n");
+			#endif
+			
+			//Search the direction instruction position
 			int dPos = 0;
-			
 			while(!isDirectionPos(sp[dPos]))
-			{
 				dPos++;
-			}
+				
+			#if defined DEBUG
+				printf("The direction's position => %d\n",dPos);
+			#endif
 			
 			
-			if(wc >= 3)
+			if(wc >= 3) //if the user give a position, wc is >= 3
 			{
+				#if defined DEBUG
+					printf("WC >= 3 so the user have gived a number of time\n");
+				#endif
+				
 				CMD = (char *)malloc(sizeof(char)*19); //dont forget to re-alloc after getting the number of times the droid must turn
 				
 				//Tourne a droite 3 fois
 				
+				
+				#if defined DEBUG
+					printf("Search the number of times tux must turn...\n");
+				#endif
+				//Search the number of turn
 				int nPos = 0;
-				
 				while(!isNumberPos(sp[nPos]))
-				{
 					nPos++;
-				}
 				
+				#if defined DEBUG
+					printf("Number of times => %d\n",nPos);
+				#endif
 
 				CMD = (char *)realloc(CMD,sizeof(char)*19+strlen(sp[nPos]));
-				
 				
 				if(!strcmp(strtolower(sp[dPos]),KW_LEFT))
 					sprintf(CMD,"Tux_Rotate(left,%d)",atoi(sp[nPos]));
 					
 				if(!strcmp(strtolower(sp[dPos]),KW_RIGHT))
 					sprintf(CMD,"Tux_Rotate(right,%d)",atoi(sp[nPos]));
-					
 			}
-			else
+			else //only turn 1 time
 			{
+				#if defined DEBUG
+					printf("Turn only 1 time !\n");
+				#endif
+				
 				//only 1 time
 				//cmd => sp[0]
 				//left => sp[1]
@@ -245,12 +343,15 @@ void analyseLine(char *line)
 				if(!strcmp(strtolower(sp[dPos]),KW_RIGHT))
 					sprintf(CMD,"Tux_Rotate(right,1)");
 			}
-			
 		}
 	}
+	else
+	{
+		//Others commands (Ex: variables)
+		//TODO
+	}
 
-
-	//DEBUG:*
+	//DEBUG:
 	printf("CMD => %s\n",CMD);
 }
 
@@ -265,6 +366,10 @@ void loadScript(char *file)
 	//4 - do action of keywords
 	//
 	
+	#if defined DEBUG
+		printf("Enter loadScript() => %s\n",file);
+	#endif
+	
 	FILE *fp = fopen(file,"r");
 	if(fp)
 	{
@@ -275,17 +380,38 @@ void loadScript(char *file)
 		{
 			fgets(buffer,4096,fp);
 			
-			if(buffer[0] != '/' && buffer[1] != '/')
-			{
-				if(buffer[0] == '/' && buffer[1] == '*')
-					in_comment = 1;
-					
-				if(!in_comment)
-					analyseLine(buffer);
+			#if defined DEBUG
+				printf("Buffer => %s\n",buffer);
+				printf("buffer[0] => %c\n",buffer[0]);
+				printf("buffer[1] => %c\n",buffer[1]);
+				
+				printf("buffer[strlen(buffer)-1] => %c\n",buffer[strlen(buffer)-1]);
+				printf("buffer[strlen(buffer)] => %c\n",buffer[strlen(buffer)]);
+			#endif
 			
-				if(buffer[0] == '*' && buffer[1] == '/')
-					in_comment = 0;
+			if(buffer[0] == '/' && buffer[1] == '*') //multi line comment start
+			{
+				#if defined DEBUG
+					printf("Enter in multiline comment\n");
+				#endif
+				
+				in_comment = 1;
 			}
+			
+			if(!in_comment)
+			{
+				if(buffer[0] != '/' && buffer[1] != '/') //one line comment
+					analyseLine(buffer);
+			}
+			
+			if( (buffer[strlen(buffer)-1] == '*' && buffer[strlen(buffer)] == '/') || (buffer[0] == '*' && buffer[1] == '/') ) //multiline comment stop
+			{
+				#if defined DEBUG
+					printf("Exit multiline comment\n");
+				#endif	
+				in_comment = 0;
+			}
+
 		}
 		
 		fclose(fp);
