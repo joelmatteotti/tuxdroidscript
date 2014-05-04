@@ -1,7 +1,7 @@
 /!\ ATTENTION /!\
 
-Ce programme est uniquement (pour le moment) l'interpréteur de script,
-qui pour le moment dans l'état ne sert _STRICTEMENT_ à rien en dehors
+Ce programme est uniquement (pour le moment) l'interprï¿½teur de script,
+qui pour le moment dans l'ï¿½tat ne sert _STRICTEMENT_ ï¿½ rien en dehors
 d'effectuer quelques tests.
 
 
@@ -21,3 +21,7 @@ All infos about this script language (in french) / Pour toutes infos sur ce lang
 
 http://forum.tuxdroid-community.org/viewtopic.php?id=318
 
+
+=============================
+
+TuxDroidScript Langauge Specification here => http://forum.tuxdroid-community.org/viewtopic.php?id=1079
