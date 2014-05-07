@@ -1,4 +1,9 @@
 
+Revision 4:
+- Add attitune commands
+- Add sound commands
+
+
 Revision 3:
 - Add more comments
 - Add debug printf() with define to enable or disable it

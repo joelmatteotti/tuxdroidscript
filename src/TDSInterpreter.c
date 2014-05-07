@@ -42,6 +42,8 @@
 						
 #include <TDSIKeywords.h>
 
+#define USER_MAX_VARS	50	//maximum of user's variables
+
 //Prototypes
 void analyseLine(char *line);
 void loadScript(char *file);
@@ -49,13 +51,59 @@ int isCmd(char *str);
 int isDirectionParam(char *str);
 int isDirectionPos(char *str);
 int isNumberPos(char *str);
+int isOperand(char *str);
+int isNumeric(char *str);
+char *searchPath(char **sp, int size);
 
+//User variables
+char **UVARS;		//all variables are registered as string
+int UVARS_CNT=-1; 	//variables count (-1 = no variable)
+
+
+
+//Define a user variable
+void setVariable(char *var_name, char *var_value)
+{
+	UVARS_CNT++;
+	UVARS[UVARS_CNT] = (char *)malloc(sizeof(char)*strlen(var_value));
+	sprintf(UVARS[UVARS_CNT],"%s",var_value);	
+}
+
+//Get user's variable value
+char *getVariable(char *var_name)
+{
+	int i;
+	char *value = NULL;
+	
+	for(i = 0; i < UVARS_CNT; i++)
+	{
+		if(!strcmp(strtolower(UVARS[i]),strtolower(var_name)))
+		{
+			value = UVARS[i];
+			break;
+		}
+	}
+	
+	return value;
+}
+
+//Return 1 if str is operand else return 0
+int isOperand(char *str)
+{
+	if(!strcmp(str,KW_MATH_EQUAL) || !strcmp(str,KW_MATH_ADD) || !strcmp(str,KW_MATH_SUB)
+		|| !strcmp(str,KW_MATH_DIV))
+		{
+			return 1;
+		}
+		
+	return 0;		
+}
 
 //Return 1 if str is the cmd else return 0
 int isCmd(char *str)
 {
 	if(!strcmp(strtolower(str),KW_ROTATE) || !strcmp(strtolower(str),KW_OPEN) || !strcmp(strtolower(str),KW_CLOSE)
-		|| !strcmp(strtolower(str),KW_SPEAK))
+		|| !strcmp(strtolower(str),KW_SPEAK) || !strcmp(strtolower(str),KW_PLAY) || !strcmp(strtolower(str),KW_EXEC))
 		{
 			return 1;
 		}		
@@ -67,7 +115,7 @@ int isCmd(char *str)
 int isFirstParam(char *str)
 {
 	if(!strcmp(strtolower(str),KW_MOUTH) || !strcmp(strtolower(str),KW_EYES_SING) || !strcmp(strtolower(str),KW_EYES_PLUR)
-		|| !strcmp(strtolower(str),KW_RIGHT) || !strcmp(strtolower(str),KW_LEFT))
+		|| !strcmp(strtolower(str),KW_RIGHT) || !strcmp(strtolower(str),KW_LEFT) || !strcmp(strtolower(str),KW_ATT))
 		{
 			return 1;
 		}
@@ -97,6 +145,52 @@ int isNumberPos(char *str)
 	return 0;
 }
 
+//
+int isNumeric(char *str)
+{
+	return isNumberPos(str);
+}
+
+char *searchPath(char **sp, int size)
+{
+	int i;
+	char c;
+	char *tStr;
+	char *url;
+	for(i = 0; i < size; i++)
+	{
+		
+		tStr = strtolower(sp[i]);
+		
+		#if defined DEBUG
+			printf("tStr => %s\n",tStr);
+		#endif
+		
+		c = tStr[0];
+		
+		#if defined DEBUG
+			printf("c => %c\n",c);
+		#endif
+		
+		if( ((c == 'c' || c == 'd' || c == 'e' || c == 'f' || c == 'g' || c == 'h' || c == 'i' || c == 'j'
+			|| c == 'k' || c == 'l' || c == 'm' || c == 'n' || c == 'o' || c == 'p' || c == 'q' || c == 'r'
+			|| c == 's' || c == 't' || c == 'u' || c == 'v' || c == 'w' || c == 'x' || c == 'y' || c == 'z')
+			&& sp[i][1] == ':'  && sp[i][2] == '\\' ) || c == '/'
+			|| ((tStr[0] == 'h' && tStr[1] == 't' && tStr[2] == 't' && tStr[3] == 'p' && tStr[4] == ':') || (tStr[0] == 'm' && tStr[1] == 'm' && tStr[2] == 's' && tStr[3] == ':'))
+			)
+		{
+			#if defined DEBUG
+				printf("URL FOUND\n");
+				printf("sp[i] => %s\n",sp[i]);
+			#endif
+			url = sp[i];
+			break;
+		}
+	}
+	
+	return url;
+}
+
 //Analyse the line and do action
 void analyseLine(char *line)
 {
@@ -124,12 +218,22 @@ void analyseLine(char *line)
 		return;	
 	}
 	
+	#if defined DEBUG
+		printf("start analyse\n");
+	#endif
+	
 	int wc = countCharacterOccurency(line,' '); //count the number of word
-	char **sp = explode(line,' '); //space is the separator in the line (Ex: turn left 10 time)
 	
 	#if defined DEBUG
 		printf("WordCount => %d\n",wc);
 	#endif
+	
+	char **sp = explode(line,' '); //space is the separator in the line (Ex: turn left 10 time)
+	
+	#if defined DEBUG
+		printf("Explode ok\n");
+	#endif
+
 	
 	//1 - Search the cmd
 	//2 - Search the first param
@@ -208,7 +312,8 @@ void analyseLine(char *line)
 		
 		sprintf(CMD,"Tux_TTS(%s,mb-fr1,50,115,1,1)",phr);
 	}
-	else if(!strcmp(strtolower(sp[cmdPos]),KW_OPEN) || !strcmp(strtolower(sp[cmdPos]),KW_CLOSE) || !strcmp(strtolower(sp[cmdPos]),KW_ROTATE))
+	else if(!strcmp(strtolower(sp[cmdPos]),KW_OPEN) || !strcmp(strtolower(sp[cmdPos]),KW_CLOSE) || !strcmp(strtolower(sp[cmdPos]),KW_ROTATE)
+		|| !strcmp(strtolower(sp[cmdPos]),KW_PLAY) || !strcmp(strtolower(sp[cmdPos]),KW_STOP) || !strcmp(strtolower(sp[cmdPos]),KW_EXEC))
 	{
 		//All others commands have one or more parameters
 	
@@ -217,19 +322,24 @@ void analyseLine(char *line)
 		#endif
 	
 	
-		#if defined DEBUG
-			printf("Search the first parameter's position\n");
-		#endif
-		
-		//Search the frist parameter's pos	
 		int fParamPos = 0;
-		while(!isFirstParam(sp[fParamPos]))
-			fParamPos++;
-
-		#if defined DEBUG
-			printf("First parameter's position => %d\n",fParamPos);
-		#endif		
-
+		
+		if(strcmp(strtolower(sp[cmdPos]),KW_PLAY))
+		{
+			#if defined DEBUG
+				printf("Search the first parameter's position\n");
+			#endif
+		
+			//Search the frist parameter's pos	
+			
+			while(!isFirstParam(sp[fParamPos]))
+				fParamPos++;
+	
+			#if defined DEBUG
+				printf("First parameter's position => %d\n",fParamPos);
+			#endif		
+		}
+	
 		if(!strcmp(strtolower(sp[cmdPos]),KW_OPEN))
 		{
 			#if defined DEBUG
@@ -344,11 +454,49 @@ void analyseLine(char *line)
 					sprintf(CMD,"Tux_Rotate(right,1)");
 			}
 		}
+		
+		if(!strcmp(strtolower(sp[cmdPos]),KW_PLAY))
+		{
+			//Ex (windows): joue la musique c:\ma_musique.mp3
+			//
+			//Ex (linux): joue la musique /home/ma_musique.mp3
+			//
+			//Ex (flux): joue la musique http://site.com/flux.mp3
+			//
+			
+			char *url = searchPath(sp,wc+1);
+			
+			#if defined DEBUG
+				printf("URL => %s\n",url);
+			#endif
+			
+			CMD = (char *)malloc(sizeof(char)*21+strlen(url)+1);
+			sprintf(CMD,"Tux_Audio(PlayMusic,%s)",url);
+		}
+		
+		if(!strcmp(strtolower(sp[cmdPos]),KW_EXEC) && !strcmp(strtolower(sp[fParamPos]),KW_ATT))
+		{
+			//
+			char *url = searchPath(sp,wc+1);
+			
+			#if defined DEBUG
+				printf("URL => %s\n",url);
+			#endif
+			
+			CMD = (char *)malloc(sizeof(char)*13+strlen(url)+1);
+			
+			
+			sprintf(CMD,"Tux_PlayAtt(%s)",url);
+		}
 	}
 	else
 	{
-		//Others commands (Ex: variables)
-		//TODO
+		#if defined DEBUG
+			printf("No command found, search for variable and math...\n");
+		#endif
+	
+		//TODO	
+	
 	}
 
 	//DEBUG:
@@ -420,6 +568,11 @@ void loadScript(char *file)
 
 int main(int argc, char **argv)
 {
+	
+	//char **res = (char **) malloc(sizeof (char *));
+	UVARS = (char **)malloc(sizeof (char *)*USER_MAX_VARS);
+	
+	
 	loadScript("default.tds");
 	
 	

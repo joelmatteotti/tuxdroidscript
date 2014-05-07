@@ -39,6 +39,13 @@
 #define KW_RIGHT "droite"
 #define KW_LEFT "gauche"
 
+//Music
+#define KW_PLAY "joue"
+#define KW_STOP "stop"
+
+//Attitune
+#define KW_EXEC "exécute"
+#define KW_ATT "attitune"
 
 //Speaking
 #define KW_SPEAK "dit" //Ex: Dit Bonjour (Say Hello)
